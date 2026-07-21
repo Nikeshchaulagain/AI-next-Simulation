@@ -320,11 +320,15 @@ export default function App() {
       if (!response.ok) {
         const errorText = await response.text();
         let errMsg = "Simulation generator failed.";
-        try {
-          const parsedErr = JSON.parse(errorText);
-          errMsg = parsedErr.error || parsedErr.message || errMsg;
-        } catch {
-          errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
+        if (response.status === 404 && (errorText.includes("NOT_FOUND") || errorText.includes("could not be found") || errorText.includes("bom1::"))) {
+          errMsg = "The SimVerse backend server is currently waking up or restarting. Please wait 3-5 seconds and click the button again to continue!";
+        } else {
+          try {
+            const parsedErr = JSON.parse(errorText);
+            errMsg = parsedErr.error || parsedErr.message || errMsg;
+          } catch {
+            errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
+          }
         }
         throw new Error(errMsg);
       }
@@ -404,11 +408,15 @@ export default function App() {
       if (!response.ok) {
         const errorText = await response.text();
         let errMsg = "Failed to progress decision.";
-        try {
-          const parsedErr = JSON.parse(errorText);
-          errMsg = parsedErr.error || parsedErr.message || errMsg;
-        } catch {
-          errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
+        if (response.status === 404 && (errorText.includes("NOT_FOUND") || errorText.includes("could not be found") || errorText.includes("bom1::"))) {
+          errMsg = "The SimVerse backend server is currently waking up or restarting. Please wait 3-5 seconds and click the button again to continue!";
+        } else {
+          try {
+            const parsedErr = JSON.parse(errorText);
+            errMsg = parsedErr.error || parsedErr.message || errMsg;
+          } catch {
+            errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
+          }
         }
         throw new Error(errMsg);
       }
