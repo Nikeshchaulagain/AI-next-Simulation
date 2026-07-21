@@ -192,7 +192,24 @@ Please define:
     }
 
     const text = response.text || "{}";
-    const parsedData = JSON.parse(text.trim());
+    let cleanedText = text.trim();
+    if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```(?:json)?\n?/i, "");
+      cleanedText = cleanedText.replace(/\n?```$/, "");
+      cleanedText = cleanedText.trim();
+    }
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(cleanedText);
+    } catch (parseErr: any) {
+      console.error("Failed to parse Gemini response as JSON (start):", cleanedText);
+      res.status(500).json({
+        error: "The AI model returned an invalid structure. Please try generating again.",
+        details: parseErr.message,
+      });
+      return;
+    }
 
     // Extract search grounding metadata if available to return to the client
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
@@ -389,7 +406,24 @@ Please output the outcome of this decision. Ensure:
     }
 
     const text = response.text || "{}";
-    const parsedData = JSON.parse(text.trim());
+    let cleanedText = text.trim();
+    if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```(?:json)?\n?/i, "");
+      cleanedText = cleanedText.replace(/\n?```$/, "");
+      cleanedText = cleanedText.trim();
+    }
+
+    let parsedData;
+    try {
+      parsedData = JSON.parse(cleanedText);
+    } catch (parseErr: any) {
+      console.error("Failed to parse Gemini response as JSON (step):", cleanedText);
+      res.status(500).json({
+        error: "The AI model returned an invalid structure. Please try generating again.",
+        details: parseErr.message,
+      });
+      return;
+    }
 
     res.json({
       success: true,

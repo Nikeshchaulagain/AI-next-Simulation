@@ -317,8 +317,20 @@ export default function App() {
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errMsg = "Simulation generator failed.";
+        try {
+          const parsedErr = JSON.parse(errorText);
+          errMsg = parsedErr.error || parsedErr.message || errMsg;
+        } catch {
+          errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
+        }
+        throw new Error(errMsg);
+      }
+
       const resJson = await response.json();
-      if (!response.ok || !resJson.success) {
+      if (!resJson.success) {
         throw new Error(resJson.error || "Simulation generator failed. Make sure your API key is configured.");
       }
 
@@ -389,8 +401,20 @@ export default function App() {
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errMsg = "Failed to progress decision.";
+        try {
+          const parsedErr = JSON.parse(errorText);
+          errMsg = parsedErr.error || parsedErr.message || errMsg;
+        } catch {
+          errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
+        }
+        throw new Error(errMsg);
+      }
+
       const resJson = await response.json();
-      if (!response.ok || !resJson.success) {
+      if (!resJson.success) {
         throw new Error(resJson.error || "Failed to progress decision.");
       }
 
