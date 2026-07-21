@@ -1,0 +1,8 @@
+{
+  "name": "SimVerse",
+  "description": "The world's first AI-powered decision simulator. Experience realistic, decision-driven scenarios across business, sports, careers, politics, survival, and more.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
