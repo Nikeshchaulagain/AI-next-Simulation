@@ -278,6 +278,52 @@ export default function App() {
     setTimeout(() => setShowSaveSuccessToast(false), 3500);
   };
 
+  // Retry Action State for failed operational dispatches
+  const [retryAction, setRetryAction] = useState<(() => void) | null>(null);
+
+  // Robust fetch helper with automatic retries for transient 404/502/503 cold-start delays
+  const fetchWithRetry = async (
+    url: string,
+    options: RequestInit,
+    retries = 3,
+    delayMs = 1200
+  ): Promise<Response> => {
+    let lastError: any = null;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.ok) {
+          return response;
+        }
+
+        const text = await response.clone().text().catch(() => "");
+        const isTransient =
+          response.status === 404 ||
+          response.status === 502 ||
+          response.status === 503 ||
+          response.status === 504 ||
+          text.includes("NOT_FOUND") ||
+          text.includes("could not be found") ||
+          text.includes("bom1::");
+
+        if (isTransient && attempt < retries) {
+          console.warn(`[SimVerse Retry] Endpoint ${url} returned transient ${response.status}. Retrying attempt ${attempt}/${retries}...`);
+          await new Promise((res) => setTimeout(res, delayMs * attempt));
+          continue;
+        }
+        return response;
+      } catch (err: any) {
+        lastError = err;
+        if (attempt < retries) {
+          await new Promise((res) => setTimeout(res, delayMs * attempt));
+          continue;
+        }
+      }
+    }
+    if (lastError) throw lastError;
+    return fetch(url, options);
+  };
+
   // Scroll active narratives to view on turn advance
   useEffect(() => {
     if (screen === "active") {
@@ -304,9 +350,10 @@ export default function App() {
     if (!selectedCategory) return;
     setLoading(true);
     setErrorMessage(null);
+    setRetryAction(null);
 
     try {
-      const response = await fetch("/api/simulation/start", {
+      const response = await fetchWithRetry("/api/simulation/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -321,7 +368,7 @@ export default function App() {
         const errorText = await response.text();
         let errMsg = "Simulation generator failed.";
         if (response.status === 404 && (errorText.includes("NOT_FOUND") || errorText.includes("could not be found") || errorText.includes("bom1::"))) {
-          errMsg = "The SimVerse backend server is currently waking up or restarting. Please wait 3-5 seconds and click the button again to continue!";
+          errMsg = "The SimVerse backend server was waking up. Please click 'Retry' to load your simulation!";
         } else {
           try {
             const parsedErr = JSON.parse(errorText);
@@ -330,11 +377,13 @@ export default function App() {
             errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
           }
         }
+        setRetryAction(() => () => handleStartSimulation());
         throw new Error(errMsg);
       }
 
       const resJson = await response.json();
       if (!resJson.success) {
+        setRetryAction(() => () => handleStartSimulation());
         throw new Error(resJson.error || "Simulation generator failed. Make sure your API key is configured.");
       }
 
@@ -387,9 +436,10 @@ export default function App() {
     if (!gameState) return;
     setLoading(true);
     setErrorMessage(null);
+    setRetryAction(null);
 
     try {
-      const response = await fetch("/api/simulation/step", {
+      const response = await fetchWithRetry("/api/simulation/step", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -409,7 +459,7 @@ export default function App() {
         const errorText = await response.text();
         let errMsg = "Failed to progress decision.";
         if (response.status === 404 && (errorText.includes("NOT_FOUND") || errorText.includes("could not be found") || errorText.includes("bom1::"))) {
-          errMsg = "The SimVerse backend server is currently waking up or restarting. Please wait 3-5 seconds and click the button again to continue!";
+          errMsg = "The SimVerse backend server was waking up. Please click 'Retry' to process your decision!";
         } else {
           try {
             const parsedErr = JSON.parse(errorText);
@@ -418,11 +468,13 @@ export default function App() {
             errMsg = `Server Error (${response.status}): ${errorText.substring(0, 150)}`;
           }
         }
+        setRetryAction(() => () => handleEvaluateDecision(chosenOption));
         throw new Error(errMsg);
       }
 
       const resJson = await response.json();
       if (!resJson.success) {
+        setRetryAction(() => () => handleEvaluateDecision(chosenOption));
         throw new Error(resJson.error || "Failed to progress decision.");
       }
 
@@ -1832,12 +1884,30 @@ export default function App() {
           <div className="space-y-1">
             <h4 className="text-xs font-bold text-rose-300">Operational Failure</h4>
             <p className="text-[11px] text-rose-200 leading-relaxed font-normal">{errorMessage}</p>
-            <button
-              onClick={() => setErrorMessage(null)}
-              className="text-[10px] font-bold text-rose-400 hover:underline mt-1.5"
-            >
-              Dismiss
-            </button>
+            <div className="flex items-center space-x-3 pt-1">
+              {retryAction && (
+                <button
+                  onClick={() => {
+                    const action = retryAction;
+                    setErrorMessage(null);
+                    setRetryAction(null);
+                    if (action) action();
+                  }}
+                  className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-extrabold rounded-lg shadow transition cursor-pointer"
+                >
+                  Retry Now
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setErrorMessage(null);
+                  setRetryAction(null);
+                }}
+                className="text-[10px] font-bold text-rose-400 hover:underline"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         </div>
       )}
