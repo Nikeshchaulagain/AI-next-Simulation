@@ -65,6 +65,7 @@ export interface GameState {
   webGroundingEnabled: boolean;
   searchGroundingQueries?: string[];
   searchGroundingSources?: Array<{ title: string; uri: string }>;
+  suggestedChoices?: string[];
   metricHistory?: Array<{ turn: number; [metricName: string]: number }>;
 }
 

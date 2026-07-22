@@ -269,7 +269,7 @@ You MUST evaluate the player's choice logically and realistically:
 - Generate a dynamic news article or social media timeline feedback about the consequence of this decision.
 - Check if this choice triggers a milestone ending (game over) or unlocks any simulation achievements (e.g., 'First Million', 'Billionaire', 'Perfect Ending', 'Crisis Averted', 'Total Ruin').
 - If the turn count exceeds 15, or metrics like Cash or Health drop to 0, or the objective is fully met, trigger an immersive GameOver ending.
-- Provide 3 new highly distinct choices or branching directions for the next turn.
+- Provide 3 brand new, highly distinct choices or branching directions for the next turn. Options MUST be directly tied to the new sequential event and NEVER repeat previously suggested options or past decisions.
 
 Your response must strictly match the JSON structure. Do not wrap JSON in markdown tags.`;
 

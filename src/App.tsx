@@ -409,6 +409,7 @@ export default function App() {
         },
         isGameOver: false,
         achievementsUnlocked: [],
+        suggestedChoices: generated.suggestedChoices || [],
         savedAt: new Date().toLocaleString(),
         webGroundingEnabled: actualWebGrounding,
         searchGroundingQueries: actualWebGrounding ? (resJson.searchQueries || []) : [],
@@ -558,6 +559,7 @@ export default function App() {
         isGameOver: stepData.isGameOver || false,
         endingSummary: stepData.endingSummary,
         achievementsUnlocked: [...gameState.achievementsUnlocked, ...newlyUnlockedAchievements],
+        suggestedChoices: stepData.suggestedChoices && stepData.suggestedChoices.length > 0 ? stepData.suggestedChoices : gameState.suggestedChoices,
         savedAt: new Date().toLocaleString(),
         webGroundingEnabled: actualWebGrounding,
         metricHistory: [
@@ -1412,29 +1414,19 @@ export default function App() {
                         
                         {/* Suggested branch selection buttons */}
                         <div className="grid grid-cols-1 gap-2">
-                          {gameState.log[gameState.log.length - 1]?.outcome && 
-                           CATEGORIES.find(c => c.id === gameState.category)?.id && (
-                            gameState.turnCount === gameState.log[gameState.log.length - 1].turn ? (
-                              // Use parsed suggestedChoices if Turn matches
-                              (gameState as any).suggestedChoices || [
-                                "Consolidate local operations and evaluate cashflow",
-                                "Draft emergency response strategy with senior executives",
-                                "Host immediate public address addressing the current crisis"
-                              ]
-                            ) : (
-                              // Fallback choices
-                              [
+                          {(gameState.suggestedChoices && gameState.suggestedChoices.length > 0
+                            ? gameState.suggestedChoices
+                            : [
                                 "Investigate current emergency options",
                                 "Consult dynamic advisor team",
                                 "Enact protective operational protocol"
                               ]
-                            )
                           ).map((choice: string, idx: number) => (
                             <button
                               key={idx}
                               disabled={loading}
                               onClick={() => handleEvaluateDecision(choice)}
-                              className="text-left w-full bg-white/5 border border-white/10 hover:border-indigo-500/40 hover:bg-white/10 text-slate-200 hover:text-white rounded-xl p-3.5 text-xs font-semibold transition flex items-center justify-between"
+                              className="text-left w-full bg-white/5 border border-white/10 hover:border-indigo-500/40 hover:bg-white/10 text-slate-200 hover:text-white rounded-xl p-3.5 text-xs font-semibold transition flex items-center justify-between cursor-pointer disabled:opacity-50"
                             >
                               <span>{choice}</span>
                               <ChevronRight className="w-4 h-4 text-slate-400 shrink-0 ml-2" />
